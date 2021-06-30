@@ -1,0 +1,5 @@
+outs:
+- md5: 1cbfe9e92d5bc9e6327593369dae03f7.dir
+  size: 197103842
+  nfiles: 3001
+  path: animals
