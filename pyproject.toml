@@ -16,6 +16,8 @@ dvc = {extras = ["gdrive"], version = "^2.4.3"}
 tensorboard = "^2.5.0"
 opencv-python = "^4.5.2"
 Hydra = "^2.5"
+isort = "^5.9.1"
+autopep8 = "^1.5.7"
 
 [tool.poetry.dev-dependencies]
 

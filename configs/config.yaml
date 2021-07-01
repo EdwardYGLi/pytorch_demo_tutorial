@@ -1,0 +1,4 @@
+defaults:
+  - env: local
+  - dataset: dogs
+  - 

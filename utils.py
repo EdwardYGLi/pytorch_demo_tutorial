@@ -1,17 +1,19 @@
 """
 Created by edwardli on 6/30/21
 """
+import os
+import random
+
 import cv2
 import numpy as np
 import torch
 import wandb
-import random
-import os
 
 
 def init_wandb(cfg):
     # initialize weights and biases.
-    wandb.init(project="torch tutorial", dir=cfg.paths.wandb_path, tags=cfg.params.tags)
+    wandb.init(project="torch tutorial", dir=os.path.join(os.getcwd(), "wandb"), tags=cfg.params.tags,
+               name=cfg.experiment_name)
     wandb.tensorboard.patch(save=True, tensorboardX=False)
     wandb.config.update(cfg)
 
