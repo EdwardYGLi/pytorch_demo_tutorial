@@ -24,10 +24,10 @@ class _DogsDatasetInternal(Dataset):
         img = self.files[idx]
         img = cv2.imread(img)
 
-        ## can add augmentations or any things here or use torch.transform to do it
-
+        ## can add augmentations or any things here or use torch.transform to do it,
         if self.transforms:
             img = self.transforms(img)
+
         return img
 
 
