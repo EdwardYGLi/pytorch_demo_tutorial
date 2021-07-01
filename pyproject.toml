@@ -12,7 +12,7 @@ torchvision = "^0.10.0"
 numpy = "^1.21.0"
 matplotlib = "^3.4.2"
 wandb = "^0.10.33"
-dvc = "^2.4.3"
+dvc = {extras = ["gdrive"], version = "^2.4.3"}
 tensorboard = "^2.5.0"
 
 [tool.poetry.dev-dependencies]
