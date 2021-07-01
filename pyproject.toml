@@ -6,7 +6,7 @@ authors = ["Edward Li <edward.li@socure.com>"]
 license = "MIT"
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.8"
 torch = "^1.9.0"
 torchvision = "^0.10.0"
 numpy = "^1.21.0"
@@ -15,6 +15,7 @@ wandb = "^0.10.33"
 dvc = {extras = ["gdrive"], version = "^2.4.3"}
 tensorboard = "^2.5.0"
 opencv-python = "^4.5.2"
+Hydra = "^2.5"
 
 [tool.poetry.dev-dependencies]
 
