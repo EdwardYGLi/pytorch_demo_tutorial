@@ -14,6 +14,7 @@ matplotlib = "^3.4.2"
 wandb = "^0.10.33"
 dvc = {extras = ["gdrive"], version = "^2.4.3"}
 tensorboard = "^2.5.0"
+opencv-python = "^4.5.2"
 
 [tool.poetry.dev-dependencies]
 
