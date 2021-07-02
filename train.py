@@ -129,8 +129,6 @@ def main(cfg):
     # create model
     model = ConvolutionalAutoEncoder()
     model = model.to(_device)
-    # weight and biases can watch the model and track gradients.
-    wandb.watch(model)
 
     # create a tensorboard writer that writes to our directory
     tboard_writer = SummaryWriter(output_dir)
@@ -147,6 +145,9 @@ def main(cfg):
 
     train_loader = DataLoader(dataset.training_data, cfg.batch_size, shuffle=True)
     validation_loader = DataLoader(dataset.validation_data, cfg.batch_size, shuffle=False)
+
+    # weight and biases can watch the model and track gradients.
+    wandb.watch(model, log="all", log_freq=len(train_loader)//4)
 
     visualize_batches = []
     val_iter = iter(validation_loader)
