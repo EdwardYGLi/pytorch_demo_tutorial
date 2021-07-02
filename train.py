@@ -32,7 +32,7 @@ def gen_validation_samples(model, vis_batches, tboard, epoch):
             img = outputs[i].cpu().numpy()
             orig = vis_batch[i].cpu().numpy()
             out_img = np.concatenate([orig, img],axis=1)
-            tboard.add_image("recon_i_{}".format(ind), img_tensor=out_img, global_step=epoch)
+            tboard.add_image("recon_{}".format(ind), img_tensor=out_img, global_step=epoch)
 
 
 def run_epoch(model, data_loader, loss_fns, val_criteria=None, optimizer=None):
