@@ -23,6 +23,7 @@ class ConvolutionalAutoEncoder(nn.Module):
 
         self.latent_enc = nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1, bias=False)
 
+        self.latent_dec = nn.Conv2d(128, 64, kernel_size=3, stride=1, padding=1, bias=False)
         self.decoder = nn.Sequential(
             nn.Conv2d(64, 32, kernel_size=3, stride=1, padding=1, bias=False),
             nn.ReLU(),
@@ -40,6 +41,7 @@ class ConvolutionalAutoEncoder(nn.Module):
         return self.latent_enc(x)
 
     def decode(self, x):
+        x = self.latent_dec(x)
         # implement the decoding pass
         return self.decoder(x)
 

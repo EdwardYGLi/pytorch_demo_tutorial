@@ -4,6 +4,7 @@ Created by edwardli on 6/30/21
 import os
 
 import hydra
+import numpy as np
 import torch
 import wandb
 from hydra.utils import get_original_cwd
@@ -14,7 +15,7 @@ from tqdm import tqdm
 from datasets.dataset import DogsDataset
 from models.net import ConvolutionalAutoEncoder
 from perceptual_loss import perceptual_loss
-from utils import init_wandb, seed_random
+from utils import init_wandb, seed_random, ssim, psnr
 
 # prefer use Gpu for everything
 _device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -23,17 +24,25 @@ _device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 def gen_validation_samples(model, vis_batches, tboard, epoch):
     for batch_idx, vis_batch in enumerate(vis_batches):
         b, c, h, w = vis_batch.shape
-        outputs = model(vis_batch)
+        vis_batch = vis_batch.to(_device)
+        outputs, _ = model(vis_batch)
 
         for i in range(b):
-            img = outputs[i].permute(1, 2, 0).cpu().numpy()
-            tboard.add_image("recon_b_{}_i_{}".format(batch_idx, i), img_tensor=img, global_step=epoch)
+            img = outputs[i].cpu().numpy()
+            orig = vis_batch[i].cpu().numpy()
+            out_img = np.concatenate([orig, img],axis=1)
+            tboard.add_image("recon_b_{}_i_{}".format(batch_idx, i), img_tensor=out_img, global_step=epoch)
 
 
-def run_epoch(model, data_loader, loss_fn, optimizer=None):
+def run_epoch(model, data_loader, loss_fns, val_criteria=None, optimizer=None):
     loss_dict = {}
-    for key in loss_fn.keys():
+    for key in loss_fns.keys():
         loss_dict[key] = 0
+    # add validation criteria
+    if val_criteria:
+        for key in val_criteria.keys():
+            loss_dict[key] = 0
+
     loss_dict["total"] = 0
 
     num_batches = len(data_loader)
@@ -44,13 +53,20 @@ def run_epoch(model, data_loader, loss_fn, optimizer=None):
         if optimizer:
             optimizer.zero_grad()
 
-        output = model(batch)
+        output, latents = model(batch)
 
         losses = []
-        for key, criterion in loss_fn:
+
+        for key, criterion in loss_fns.items():
             curr_loss = criterion(output, batch)
             losses.append(curr_loss)
             loss_dict[key] += float(curr_loss)
+
+        # validation criteria that aren't used in optimization.
+        if val_criteria:
+            for key, criterion in val_criteria.items():
+                curr_loss = criterion(output, batch)
+                loss_dict[key] += float(curr_loss)
 
         total_loss = sum(losses)
         loss_dict["total"] += float(total_loss)
@@ -139,7 +155,11 @@ def main(cfg):
         visualize_batches.append(next(val_iter))
 
     # we can do reflection here as wel
-    loss_fn = get_loss_fn(cfg)
+    loss_fns = get_loss_fn(cfg)
+
+    validation_criteria = {"ssim": ssim,
+                           "psnr": psnr
+                           }
 
     curr_best = 1.0E10
 
@@ -158,7 +178,8 @@ def main(cfg):
         gen_validation_samples(model, visualize_batches, tboard_writer, epoch)
 
         # run an validation epoch
-        epoch_val_loss = run_epoch(model, validation_loader, loss_fn)
+        epoch_val_loss = run_epoch(model=model, data_loader=validation_loader, loss_fns=loss_fns,
+                                   val_criteria=validation_criteria)
 
         if epoch_val_loss["total"] < curr_best:
             torch.save(model.state_dict(), os.path.join(output_dir, "_best.pt"))
@@ -166,19 +187,19 @@ def main(cfg):
         # log losses to tensorboard
         for key, value in epoch_val_loss.items():
             print("val " + key, value)
-            tboard_writer.add_scalar(key, value, epoch)
+            tboard_writer.add_scalar("val_" + key, value, epoch)
 
         # resume autograd
         torch.set_grad_enabled(True)
         model.train()
 
         # run an training epoch
-        epoch_train_loss = run_epoch(model, validation_loader, loss_fn, optimizer)
+        epoch_train_loss = run_epoch(model=model, data_loader=train_loader, loss_fns=loss_fns, optimizer=optimizer)
 
         # log losses to tensorboard on epoch basis, can also log every few steps within the train function.
         for key, value in epoch_train_loss.items():
             print("train " + key, value)
-            tboard_writer.add_scalar(key, value, epoch)
+            tboard_writer.add_scalar("train_" + key, value, epoch)
 
     torch.save(model.state_dict(), os.path.join(output_dir, "_final.pt"))
 
