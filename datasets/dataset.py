@@ -2,8 +2,8 @@
 Created by edwardli on 6/30/21
 """
 
+import glob
 import os
-from glob import glob
 
 import cv2
 from torch.utils.data.dataset import Dataset
@@ -49,7 +49,7 @@ class DogsDataset:
             transforms.Resize(size=cfg.img_size)
         ])
 
-        train_path = os.path.join(code_dir,cfg.dataset_path,"train")
-        val_path = os.path.join(code_dir,cfg.dataset_path,"val")
+        train_path = os.path.join(code_dir, cfg.dataset_path, "train")
+        val_path = os.path.join(code_dir, cfg.dataset_path, "val")
         self.training_data = _DogsDatasetInternal(train_path, cfg.file_pattern, trans=train_transforms)
         self.validation_data = _DogsDatasetInternal(val_path, cfg.file_pattern, trans=validation_transforms)

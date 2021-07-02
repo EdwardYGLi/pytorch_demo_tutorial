@@ -70,10 +70,10 @@ def run_epoch(model, data_loader, loss_fn, optimizer=None):
 def get_optimizer(model, cfg):
     # we can do reflection/importlib etc here as well, but being explicit is better for readability and understanding the code.
     if cfg.optimizer.name == "adam":
-        return torch.optim.Adam(model.parameters, cfg.optimizer.lr, (cfg.optimizer.beta1, cfg.optimizer.beta2),
+        return torch.optim.Adam(model.parameters(), cfg.optimizer.lr, (cfg.optimizer.beta1, cfg.optimizer.beta2),
                                 cfg.optimizer.eps)
     elif cfg.optimizer.name == "adamw":
-        return torch.optim.AdamW(model.parameters, cfg.optimizer.lr, (cfg.optimizer.beta1, cfg.optimizer.beta2),
+        return torch.optim.AdamW(model.parameters(), cfg.optimizer.lr, (cfg.optimizer.beta1, cfg.optimizer.beta2),
                                  cfg.optimizer.eps,
                                  cfg.optimizer.weight_decay)
     elif cfg.optimizer.name == "sgd":
@@ -100,13 +100,12 @@ def get_loss_fn(cfg):
 def main(cfg):
     # hydra creates a directory for us so we can use current working directory as output directory.
     output_dir = os.getcwd()
-    project_out_dir = cfg.env.output_dir
+    project_out_dir = cfg.paths.output_dir
     code_dir = get_original_cwd()
 
     # init experiment in wandb
-    wandb_dir = os.path.join(project_out_dir, ".wandb")
-    os.makedirs(wandb_dir, exist_ok=True)
-    init_wandb(cfg, wandb_dir)
+    os.makedirs(os.path.join(project_out_dir, "wandb"), exist_ok=True)
+    init_wandb(cfg, project_out_dir)
 
     # reproducibility
     seed_random(cfg.seed)

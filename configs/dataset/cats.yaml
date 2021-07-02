@@ -1,5 +1,5 @@
 name: "cats"
-dataset_path: "dataset/cats"
+dataset_path: "datasets/animals/cats"
 file_pattern: "cats_*.jpg"
 img_size: 256
 brightness_jitter: 0.1

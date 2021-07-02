@@ -12,3 +12,9 @@ loss_fn: 'perceptual'
 epochs : 30
 save_interval: 3
 vis_batches: 2
+batch_size: 8
+seed: 24
+tags:
+  - '${dataset.name}'
+  - '${optimizer.name}'
+  - '${loss_fn}'
