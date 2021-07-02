@@ -10,9 +10,9 @@ import torch
 import wandb
 
 
-def init_wandb(cfg):
+def init_wandb(cfg, original_cwd):
     # initialize weights and biases.
-    wandb.init(project="torch tutorial", dir=os.path.join(os.getcwd(), "wandb"), tags=cfg.params.tags,
+    wandb.init(project=cfg.project_name, dir=os.path.join(original_cwd, ".wandb"), tags=cfg.tags,
                name=cfg.experiment_name)
     wandb.tensorboard.patch(save=True, tensorboardX=False)
     wandb.config.update(cfg)

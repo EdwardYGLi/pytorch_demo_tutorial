@@ -28,6 +28,10 @@ def eval():
 
 @hydra.main(config_name='config', config_path='config')
 def main(cfg):
+    # hydra creates a directory for us so we can use current working directory as output directory.
+    output_dir = os.getcwd()
+    code_dir = get_original_cwd()
+
     # init experiment in wandb
     init_wandb(cfg)
 
@@ -37,10 +41,7 @@ def main(cfg):
     # create model
     model = ConvolutionalAutoEncoder()
 
-    # hydra creates a directory for us so we can use current working directory as output directory.
-    output_dir = os.getcwd()
-    code_dir = get_original_cwd()
-
+    # create a tensorboard writer
     tboard_writter = SummaryWriter(os.path.join(output_dir, "tensorboard/"))
 
     # we can do reflection/importlib etc here as well, but being explicit is better for readability and understanding the code.
