@@ -1,4 +1,12 @@
 defaults:
   - env: local
   - dataset: dogs
-  - 
+  - optimizer: adam
+hydra:
+  run:
+    dir: '${env.output_dir}/${experiment_name}'
+
+experiment_prefix: "conv_auto_encoder"
+experiment_name: '${now:%Y-%m-%d_%H-%M-%S}_${dataset.name}_${optimizer.name}'
+loss_fn: 'perceptual'
+epochs : 30

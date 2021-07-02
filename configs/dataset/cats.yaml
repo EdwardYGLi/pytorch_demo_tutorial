@@ -1,0 +1,8 @@
+name: "cats"
+dataset_path: "dataset/cats"
+file_pattern: "cats_*.jpg"
+img_size: 256
+brightness_jitter: 0.1
+contrast_jitter: 0.1
+saturation_jitter: 0.1
+hue_jitter: 0.1

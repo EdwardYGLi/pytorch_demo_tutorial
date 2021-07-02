@@ -32,7 +32,7 @@ class _DogsDatasetInternal(Dataset):
 
 
 class DogsDataset:
-    def __init__(self, cfg):
+    def __init__(self, code_dir, cfg):
         # do some augmentations
         train_transforms = transforms.Compose([
             transforms.ToTensor(),
@@ -49,5 +49,7 @@ class DogsDataset:
             transforms.Resize(size=cfg.img_size)
         ])
 
-        self.training_data = _DogsDatasetInternal(cfg.train_path, cfg.file_pattern, trans=train_transforms)
-        self.validation_data = _DogsDatasetInternal(cfg.val_path, cfg.file_pattern, trans=validation_transforms)
+        train_path = os.path.join(code_dir,cfg.dataset_path,"train")
+        val_path = os.path.join(code_dir,cfg.dataset_path,"val")
+        self.training_data = _DogsDatasetInternal(train_path, cfg.file_pattern, trans=train_transforms)
+        self.validation_data = _DogsDatasetInternal(val_path, cfg.file_pattern, trans=validation_transforms)
