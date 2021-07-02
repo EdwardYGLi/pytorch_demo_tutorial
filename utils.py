@@ -8,6 +8,7 @@ import cv2
 import numpy as np
 import torch
 import wandb
+from omegaconf import OmegaConf
 
 
 def init_wandb(cfg, wandb_dir):
@@ -15,7 +16,7 @@ def init_wandb(cfg, wandb_dir):
     wandb.init(project=cfg.project_name, dir=wandb_dir, tags=cfg.tags,
                name=cfg.experiment_name)
     wandb.tensorboard.patch(save=True, tensorboardX=False)
-    wandb.config.update(cfg)
+    wandb.config.update(OmegaConf.to_object(cfg))
 
 
 def seed_random(seed: int):
