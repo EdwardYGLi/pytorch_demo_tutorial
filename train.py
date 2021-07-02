@@ -28,10 +28,10 @@ def gen_validation_samples(model, vis_batches, tboard, epoch):
         outputs, _ = model(vis_batch)
 
         for i in range(b):
-            ind = batch_idx*b+i
-            img = outputs[i].cpu().numpy()
-            orig = vis_batch[i].cpu().numpy()
-            out_img = np.concatenate([orig, img],axis=1)
+            ind = batch_idx * b + i
+            img = outputs[i].cpu().numpy()[::-1, :, :]
+            orig = vis_batch[i].cpu().numpy()[::-1, :, :]
+            out_img = np.concatenate([orig, img], axis=1)
             tboard.add_image("recon_{}".format(ind), img_tensor=out_img, global_step=epoch)
 
 
@@ -148,7 +148,7 @@ def main(cfg):
     validation_loader = DataLoader(dataset.validation_data, cfg.batch_size, shuffle=False)
 
     # weight and biases can watch the model and track gradients (twice every epoch).
-    wandb.watch(model, log="all", log_freq=len(train_loader)//2)
+    wandb.watch(model, log="all", log_freq=len(train_loader) // 2)
 
     visualize_batches = []
     val_iter = iter(validation_loader)
@@ -204,6 +204,7 @@ def main(cfg):
             tboard_writer.add_scalar("train_" + key, value, epoch)
 
     torch.save(model.state_dict(), os.path.join(output_dir, "_final.pt"))
+    wandb.finish()
 
 
 if __name__ == '__main__':

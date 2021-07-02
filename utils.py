@@ -13,9 +13,9 @@ from omegaconf import OmegaConf
 
 def init_wandb(cfg, wandb_dir):
     # initialize weights and biases.
+    # wandb.tensorboard.patch(save=False, pytorch=True)
     wandb.init(project=cfg.project_name, dir=wandb_dir, tags=cfg.tags,
-               name=cfg.experiment_name)
-    wandb.tensorboard.patch(save=True, tensorboardX=False)
+               name=cfg.experiment_name, reinit=True, sync_tensorboard=True)
     wandb.config.update(OmegaConf.to_object(cfg))
 
 
