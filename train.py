@@ -94,7 +94,7 @@ def get_optimizer(model, cfg):
                                  cfg.optimizer.weight_decay)
     elif cfg.optimizer.name == "sgd":
         return torch.optim.SGD(model.parameters(), cfg.optimizer.lr, cfg.optimizer.momentum,
-                               cfg.optimizer.dampening, cfg.optmizer.weight_decay, cfg.optimizer.nesterov)
+                               cfg.optimizer.dampening, cfg.optimizer.weight_decay, cfg.optimizer.nesterov)
     else:
         raise AssertionError("optimizer type ({}) not correct".format(cfg.optimizer.name))
 
