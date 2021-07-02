@@ -10,3 +10,4 @@ project_name: "conv_auto_encoder"
 experiment_name: '${now:%Y-%m-%d_%H-%M-%S}_${dataset.name}_${optimizer.name}'
 loss_fn: 'perceptual'
 epochs : 30
+save_interval: 3
