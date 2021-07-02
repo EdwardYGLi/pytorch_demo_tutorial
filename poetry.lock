@@ -543,14 +543,6 @@ python-versions = "*"
 pyparsing = ">=2.4.2,<3"
 
 [[package]]
-name = "hydra"
-version = "2.5"
-description = "A high performance persistent bloom filter"
-category = "main"
-optional = false
-python-versions = "*"
-
-[[package]]
 name = "hydra-core"
 version = "1.1.0"
 description = "A framework for elegantly configuring complex applications"
@@ -1417,7 +1409,7 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=1.2.3)", "pytest-flake8", "pyt
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "09eaf87d7607c291b8350f99c90b13693279c463e182935d5678abeb22e9790a"
+content-hash = "af49479ac7d1bbf225a6c21e2fff06e06f594a508e7c3ab3954a0de472482b79"
 
 [metadata.files]
 absl-py = [
@@ -1688,9 +1680,6 @@ grpcio = [
 httplib2 = [
     {file = "httplib2-0.19.1-py3-none-any.whl", hash = "sha256:2ad195faf9faf079723f6714926e9a9061f694d07724b846658ce08d40f522b4"},
     {file = "httplib2-0.19.1.tar.gz", hash = "sha256:0b12617eeca7433d4c396a100eaecfa4b08ee99aa881e6df6e257a7aad5d533d"},
-]
-hydra = [
-    {file = "Hydra-2.5.tar.gz", hash = "sha256:247091b9c279c77686ea995f0f07070a28870c1942959b1474ad57076074384a"},
 ]
 hydra-core = [
     {file = "hydra-core-1.1.0.tar.gz", hash = "sha256:ef20f54c99d6061e1fffee33f43901eb7a09f23291f6bda56afe1c8f68033b2b"},
