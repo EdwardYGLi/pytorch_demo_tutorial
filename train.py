@@ -96,7 +96,7 @@ def get_loss_fn(cfg):
         raise AssertionError("loss type ({}) not available".format(cfg.loss_fn))
 
 
-@hydra.main(config_name='config', config_path='config')
+@hydra.main(config_name='config', config_path='configs')
 def main(cfg):
     # hydra creates a directory for us so we can use current working directory as output directory.
     output_dir = os.getcwd()
