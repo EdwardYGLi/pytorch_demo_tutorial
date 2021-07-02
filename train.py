@@ -28,10 +28,11 @@ def gen_validation_samples(model, vis_batches, tboard, epoch):
         outputs, _ = model(vis_batch)
 
         for i in range(b):
+            ind = batch_idx*b+i
             img = outputs[i].cpu().numpy()
             orig = vis_batch[i].cpu().numpy()
             out_img = np.concatenate([orig, img],axis=1)
-            tboard.add_image("recon_b_{}_i_{}".format(batch_idx, i), img_tensor=out_img, global_step=epoch)
+            tboard.add_image("recon_i_{}".format(ind), img_tensor=out_img, global_step=epoch)
 
 
 def run_epoch(model, data_loader, loss_fns, val_criteria=None, optimizer=None):
@@ -129,6 +130,8 @@ def main(cfg):
     # create model
     model = ConvolutionalAutoEncoder()
     model = model.to(_device)
+    # weight and biases can watch the model and track gradients.
+    wandb.watch(model, log="all", log_freq=10)
 
     # create a tensorboard writer that writes to our directory
     tboard_writer = SummaryWriter(output_dir)
@@ -145,9 +148,6 @@ def main(cfg):
 
     train_loader = DataLoader(dataset.training_data, cfg.batch_size, shuffle=True)
     validation_loader = DataLoader(dataset.validation_data, cfg.batch_size, shuffle=False)
-
-    # weight and biases can watch the model and track gradients.
-    wandb.watch(model, log="all", log_freq=len(train_loader)//4)
 
     visualize_batches = []
     val_iter = iter(validation_loader)

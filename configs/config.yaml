@@ -4,8 +4,10 @@ defaults:
   - optimizer: adam
 hydra:
   run:
-    dir: '${paths.output_dir}/${experiment_name}'
-
+    dir: ${paths.output_dir}/${experiment_name}
+  sweep:
+    dir: ${paths.output_dir}/${experiment_name}
+    subdir: ${experiment_name}
 project_name: "conv_auto_encoder"
 experiment_name: '${now:%Y-%m-%d_%H-%M-%S}_${dataset.name}_${optimizer.name}'
 loss_fn: 'perceptual'
@@ -15,6 +17,6 @@ vis_batches: 2
 batch_size: 8
 seed: 24
 tags:
-  - '${dataset.name}'
-  - '${optimizer.name}'
-  - '${loss_fn}'
+  - ${dataset.name}
+  - ${optimizer.name}
+  - ${loss_fn}
