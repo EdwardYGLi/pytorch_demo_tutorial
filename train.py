@@ -131,6 +131,13 @@ def main(cfg):
     model = ConvolutionalAutoEncoder()
     model = model.to(_device)
 
+    # load pretrained checkpoint to resume training.
+    if cfg.pretrained != "":
+        print("loading ckpt: {}".format(cfg.pretrained))
+        # if you ckpt has other caveats or you want loose loading you can use non strict. It will load whatever matches
+        state_dict = torch.load(cfg.pretrained)
+        model.load_state_dict(state_dict)
+
     # create a tensorboard writer that writes to our directory
     tboard_writer = SummaryWriter(output_dir)
 
@@ -148,7 +155,7 @@ def main(cfg):
     validation_loader = DataLoader(dataset.validation_data, cfg.batch_size, shuffle=False)
 
     # weight and biases can watch the model and track gradients (twice every epoch).
-    wandb.watch(model, log="all", log_freq=len(train_loader) // 2)
+    wandb.watch(model, log="all", log_freq=10)
 
     visualize_batches = []
     val_iter = iter(validation_loader)
@@ -156,7 +163,7 @@ def main(cfg):
     for i in range(cfg.vis_batches):
         visualize_batches.append(next(val_iter))
 
-    # we can do reflection here as wel
+    # we can do reflection here as well
     loss_fns = get_loss_fn(cfg)
 
     validation_criteria = {"ssim": ssim,
@@ -166,11 +173,6 @@ def main(cfg):
     curr_best = 1.0E10
 
     for epoch in tqdm(range(cfg.epochs)):
-        # step your scheduler
-        if scheduler:
-            scheduler.step()
-            tboard_writer.add_scalar("learning_rate", scheduler.get_lr()[0], epoch)
-
         print("epoch {}".format(epoch))
         # pause autograd for speed for validation
         torch.set_grad_enabled(False)
@@ -202,6 +204,11 @@ def main(cfg):
         for key, value in epoch_train_loss.items():
             print("train " + key, value)
             tboard_writer.add_scalar("train_" + key, value, epoch)
+
+        # step your scheduler
+        if scheduler:
+            scheduler.step()
+            tboard_writer.add_scalar("learning_rate", scheduler.get_lr()[0], epoch)
 
     torch.save(model.state_dict(), os.path.join(output_dir, "_final.pt"))
     wandb.finish()

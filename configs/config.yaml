@@ -16,6 +16,7 @@ save_interval: 3
 vis_batches: 2
 batch_size: 8
 seed: 24
+pretrained: "" #"./ckpt/best.pth"
 tags:
   - ${dataset.name}
   - ${optimizer.name}
