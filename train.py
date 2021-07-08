@@ -6,6 +6,7 @@ import os
 import hydra
 import numpy as np
 import torch
+import torch.nn as nn
 import wandb
 from hydra.utils import get_original_cwd
 from torch.utils.data import DataLoader
@@ -21,11 +22,50 @@ from utils import init_wandb, seed_random, ssim, psnr
 _device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
+def activation_hook(model, layers):
+    visualisation = {}
+    name_dicts = {}
+    handles = {}
+
+    def hook_fn(m, i, o):
+        visualisation[name_dicts[m]] = o
+
+    def hook_layers(net, layers=None):
+        for name, layer in net.named_modules():
+            # If it is a sequential, don't register a hook on it
+            if not isinstance(layer, nn.Sequential):
+                # check if we want to hook everything
+                if layers is None or name in layers:
+                    name_dicts[layer] = name
+                    handle = layer.register_forward_hook(hook_fn)
+                    handles[name] = handle
+
+    hook_layers(model, layers)
+
+    return visualisation, handles
+
+
 def gen_validation_samples(model, vis_batches, tboard, epoch):
+    # we will hook to our activation hooks and unhook after.
+    vis_layers = ["encoder.0"]
+
+    # hook our pre hook to model
+    activations, handles = activation_hook(model, vis_layers)
+    plot_act = False
     for batch_idx, vis_batch in enumerate(vis_batches):
         b, c, h, w = vis_batch.shape
         vis_batch = vis_batch.to(_device)
         outputs, _ = model(vis_batch)
+
+        if not plot_act:
+            for vis_layer in vis_layers:
+                # for now just visualize first level activations for the first image in first batch
+                curr_act = activations[vis_layer][0]
+                c, h, w = curr_act.shape
+                for k in range(c):
+                    act = curr_act[k:k+1] # slicing keep dim
+                    tboard.add_image("img_0_act_{}".format(k), img_tensor=act, global_step=epoch)
+            plot_act = True
 
         for i in range(b):
             ind = batch_idx * b + i
@@ -33,6 +73,9 @@ def gen_validation_samples(model, vis_batches, tboard, epoch):
             orig = vis_batch[i].cpu().numpy()[::-1, :, :]
             out_img = np.concatenate([orig, img], axis=1)
             tboard.add_image("recon_{}".format(ind), img_tensor=out_img, global_step=epoch)
+
+    for vis_layer in vis_layers:
+        handles[vis_layer].remove()
 
 
 def run_epoch(model, data_loader, loss_fns, val_criteria=None, optimizer=None):
