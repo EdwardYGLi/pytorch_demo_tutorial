@@ -17,6 +17,7 @@ vis_batches: 2
 batch_size: 8
 seed: 24
 pretrained: "" #"./ckpt/best.pth"
+debug: False
 tags:
   - ${dataset.name}
   - ${optimizer.name}

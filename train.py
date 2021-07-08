@@ -23,6 +23,8 @@ _device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def activation_hook(model, layers):
+    # this is more as an example for hooks, but you could also just output the layer
+    # you want in your forward() function and plot.
     visualisation = {}
     name_dicts = {}
     handles = {}
@@ -45,6 +47,31 @@ def activation_hook(model, layers):
     return visualisation, handles
 
 
+def grad_hook(model, layers):
+    name_dicts = {}
+    handles = {}
+
+    def back_hook(m, i, o):
+        print("dl/dw: {}".format(m.weight.grad.mean()))
+        for grad in i:
+            print("dl/di: {}".format(grad.mean()))
+        for grad in o:
+            print("dl/do: {}".format(grad.mean()))
+
+    def back_hooks(net, layers=["decoder.6"]):
+        for name, layer in net.named_modules():
+            # If it is a sequential, don't register a hook on it
+            # but recursively register hook on all it's module children
+            if not isinstance(layer, nn.Sequential):
+                if name in layers:
+                    name_dicts[layer] = name
+                    handle = layer.register_full_backward_hook(back_hook)
+                    handles[name] = handle
+
+    back_hooks(model, layers)
+    return handles
+
+
 def gen_validation_samples(model, vis_batches, tboard, epoch):
     # we will hook to our activation hooks and unhook after.
     vis_layers = ["encoder.0"]
@@ -63,7 +90,7 @@ def gen_validation_samples(model, vis_batches, tboard, epoch):
                 curr_act = activations[vis_layer][0]
                 c, h, w = curr_act.shape
                 for k in range(c):
-                    act = curr_act[k:k+1] # slicing keep dim
+                    act = curr_act[k:k + 1]  # slicing keep dim
                     tboard.add_image("img_0_act_{}".format(k), img_tensor=act, global_step=epoch)
             plot_act = True
 
@@ -74,12 +101,12 @@ def gen_validation_samples(model, vis_batches, tboard, epoch):
             out_img = np.concatenate([orig, img], axis=1)
             tboard.add_image("recon_{}".format(ind), img_tensor=out_img, global_step=epoch)
 
-    # unhooking will free some memory here. 
+    # unhooking will free some memory here.
     for vis_layer in vis_layers:
         handles[vis_layer].remove()
 
 
-def run_epoch(model, data_loader, loss_fns, val_criteria=None, optimizer=None):
+def run_epoch(model, data_loader, loss_fns, val_criteria=None, optimizer=None, debug=False):
     loss_dict = {}
     for key in loss_fns.keys():
         loss_dict[key] = 0
@@ -101,7 +128,6 @@ def run_epoch(model, data_loader, loss_fns, val_criteria=None, optimizer=None):
         output, latents = model(batch)
 
         losses = []
-
         for key, criterion in loss_fns.items():
             curr_loss = criterion(output, batch)
             losses.append(curr_loss)
@@ -117,7 +143,9 @@ def run_epoch(model, data_loader, loss_fns, val_criteria=None, optimizer=None):
         loss_dict["total"] += float(total_loss)
 
         if optimizer:
-            total_loss.backward()
+            total_loss.backward(retain_graph=debug)
+            if debug:
+                print("dl/dw (loop):{}".format(model.decoder[6].weight.grad.mean()))
             optimizer.step()
 
     # divide loss by number of batches for per batch loss as losses are batch
@@ -199,7 +227,7 @@ def main(cfg):
     validation_loader = DataLoader(dataset.validation_data, cfg.batch_size, shuffle=False)
 
     # weight and biases can watch the model and track gradients (twice every epoch).
-    wandb.watch(model, log="all", log_freq=10)
+    wandb.watch(model, log="all", log_freq=len(train_loader))
 
     visualize_batches = []
     val_iter = iter(validation_loader)
@@ -227,7 +255,7 @@ def main(cfg):
 
         # run an validation epoch
         epoch_val_loss = run_epoch(model=model, data_loader=validation_loader, loss_fns=loss_fns,
-                                   val_criteria=validation_criteria)
+                                   val_criteria=validation_criteria, debug=cfg.debug)
 
         if epoch_val_loss["total"] < curr_best:
             torch.save(model.state_dict(), os.path.join(output_dir, "_best.pt"))
@@ -241,9 +269,17 @@ def main(cfg):
         torch.set_grad_enabled(True)
         model.train()
 
-        # run an training epoch
-        epoch_train_loss = run_epoch(model=model, data_loader=train_loader, loss_fns=loss_fns, optimizer=optimizer)
+        if cfg.debug:
+            if epoch == 0:
+                handles = grad_hook(model, ["decoder.6"])
 
+        # run an training epoch
+        epoch_train_loss = run_epoch(model=model, data_loader=train_loader, loss_fns=loss_fns, optimizer=optimizer,
+                                     debug=cfg.debug)
+
+        if cfg.debug:
+            for key, handle in handles.items():
+                handle.remove()
         # log losses to tensorboard on epoch basis, can also log every few steps within the train function.
         for key, value in epoch_train_loss.items():
             print("train " + key, value)
