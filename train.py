@@ -74,6 +74,7 @@ def gen_validation_samples(model, vis_batches, tboard, epoch):
             out_img = np.concatenate([orig, img], axis=1)
             tboard.add_image("recon_{}".format(ind), img_tensor=out_img, global_step=epoch)
 
+    # unhooking will free some memory here. 
     for vis_layer in vis_layers:
         handles[vis_layer].remove()
 
