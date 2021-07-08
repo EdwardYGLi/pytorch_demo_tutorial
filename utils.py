@@ -12,6 +12,12 @@ from omegaconf import OmegaConf
 
 
 def init_wandb(cfg, wandb_dir):
+    """
+    initiate wandb
+    @param cfg: hydra config directory
+    @param wandb_dir: wandb directory for storing intermediate files
+    @return:
+    """
     # initialize weights and biases.
     # wandb.tensorboard.patch(save=False, pytorch=True)
     wandb.init(project=cfg.project_name, dir=wandb_dir, tags=cfg.tags,
@@ -36,6 +42,12 @@ def seed_random(seed: int):
 
 
 def psnr(pred, target):
+    """
+    peak to peak signal to noise ratio, because this function is implemented in torch, we can use this directly as loss fn as well.
+    @param pred: prediction
+    @param target: target
+    @return: psnr
+    """
     # implement PSNR (peak to peak signal to noise ratio)
     # between prediction and target here
     mse = torch.mean((pred - target) ** 2)
@@ -43,9 +55,12 @@ def psnr(pred, target):
 
 
 def ssim(pred, target):
-    # implement SSIM (structured similarity index),
-    # between prediction and target here\
-
+    """
+    # SSIM (structured similarity index), This uses a more numpy/cv way so can't be used directly as loss fn
+    @param pred: prediction
+    @param target: target
+    @return: ssim score
+    """
     # original dimension (b, c, h, w)
     pred = pred.detach().cpu().permute(0, 2, 3, 1).numpy()
     target = target.detach().cpu().permute(0, 2, 3, 1).numpy()

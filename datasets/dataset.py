@@ -46,7 +46,7 @@ class DogsDataset:
         # for validation keep it simple.
         validation_transforms = transforms.Compose([
             transforms.ToTensor(),
-            transforms.Resize(size=(cfg.img_size,cfg.img_size))
+            transforms.Resize(size=(cfg.img_size, cfg.img_size))
         ])
 
         train_path = os.path.join(code_dir, cfg.dataset_path, "train")

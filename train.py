@@ -23,6 +23,12 @@ _device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def activation_hook(model, layers):
+    """
+    add a forward hook to aid in visualizations
+    @param model: input model
+    @param layers: layers to include in the hook
+    @return: a dictionary of visualizers, a dictionary of handlers used to remove hooks later on
+    """
     # this is more as an example for hooks, but you could also just output the layer
     # you want in your forward() function and plot.
     visualisation = {}
@@ -48,6 +54,12 @@ def activation_hook(model, layers):
 
 
 def grad_hook(model, layers):
+    """
+    Demo backward hook function
+    @param model: input model
+    @param layers: layers to watch
+    @return: handles
+    """
     name_dicts = {}
     handles = {}
 
@@ -73,6 +85,14 @@ def grad_hook(model, layers):
 
 
 def gen_validation_samples(model, vis_batches, tboard, epoch):
+    """
+    Generate some validation plots to help us visualize our training
+    @param model: model
+    @param vis_batches: validation batch images
+    @param tboard: summary writer
+    @param epoch: current epoch
+    @return: None
+    """
     # we will hook to our activation hooks and unhook after.
     vis_layers = ["encoder.0"]
 
@@ -91,7 +111,7 @@ def gen_validation_samples(model, vis_batches, tboard, epoch):
                 c, h, w = curr_act.shape
                 for k in range(c):
                     act = curr_act[k:k + 1]  # slicing keep dim
-                    tboard.add_image("img_0_act_{}".format(k), img_tensor=act, global_step=epoch)
+                    tboard.add_image("img_0_{}_act_{}".format(vis_layer,k), img_tensor=act, global_step=epoch)
             plot_act = True
 
         for i in range(b):
@@ -107,6 +127,16 @@ def gen_validation_samples(model, vis_batches, tboard, epoch):
 
 
 def run_epoch(model, data_loader, loss_fns, val_criteria=None, optimizer=None, debug=False):
+    """
+    Run model for an epoch
+    @param model: model
+    @param data_loader: data loader
+    @param loss_fns: loss functions
+    @param val_criteria: additional validation critiers
+    @param optimizer: optimizer for train step
+    @param debug: print grads or any debug stuff
+    @return: loss summary for current epoch.
+    """
     loss_dict = {}
     for key in loss_fns.keys():
         loss_dict[key] = 0
@@ -157,6 +187,12 @@ def run_epoch(model, data_loader, loss_fns, val_criteria=None, optimizer=None, d
 
 
 def get_optimizer(model, cfg):
+    """
+    based on config create the optimizer
+    @param model: network model
+    @param cfg: config file
+    @return: optimizer
+    """
     # we can do reflection/importlib etc here as well, but being explicit is better for readability and understanding the code.
     if cfg.optimizer.name == "adam":
         return torch.optim.Adam(model.parameters(), cfg.optimizer.lr, (cfg.optimizer.beta1, cfg.optimizer.beta2),
@@ -173,6 +209,11 @@ def get_optimizer(model, cfg):
 
 
 def get_loss_fn(cfg):
+    """
+    get loss function based on cfg object
+    @param cfg: config file
+    @return: dictionary of loss functions with name and function
+    """
     # we can do reflection/importlib etc here as well, but being explicit is more pythonic
     if cfg.loss_fn == "mae":
         return {"mae": torch.nn.L1Loss()}
@@ -187,6 +228,11 @@ def get_loss_fn(cfg):
 
 @hydra.main(config_name='config', config_path='configs')
 def main(cfg):
+    """
+    main training function
+    @param cfg: config file
+    @return:
+    """
     # hydra creates a directory for us so we can use current working directory as output directory.
     output_dir = os.getcwd()
     project_out_dir = cfg.paths.output_dir
@@ -269,14 +315,15 @@ def main(cfg):
         torch.set_grad_enabled(True)
         model.train()
 
+        # quick demo of backward hooks in network.
         if cfg.debug:
-            if epoch == 0:
-                handles = grad_hook(model, ["decoder.6"])
+            handles = grad_hook(model, ["decoder.6"])
 
         # run an training epoch
         epoch_train_loss = run_epoch(model=model, data_loader=train_loader, loss_fns=loss_fns, optimizer=optimizer,
                                      debug=cfg.debug)
 
+        # clear handles
         if cfg.debug:
             for key, handle in handles.items():
                 handle.remove()
