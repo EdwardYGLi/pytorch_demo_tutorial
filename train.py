@@ -304,7 +304,7 @@ def main(cfg):
                                    val_criteria=validation_criteria, debug=cfg.debug)
 
         if epoch_val_loss["total"] < curr_best:
-            torch.save(model.state_dict(), os.path.join(output_dir, "_best.pt"))
+            torch.save(model.state_dict(), os.path.join(output_dir, cfg.experiment_name + "_best.pt"))
 
         # log losses to tensorboard
         for key, value in epoch_val_loss.items():
@@ -337,7 +337,7 @@ def main(cfg):
             scheduler.step()
             tboard_writer.add_scalar("learning_rate", scheduler.get_lr()[0], epoch)
 
-    torch.save(model.state_dict(), os.path.join(output_dir, "_final.pt"))
+    torch.save(model.state_dict(), os.path.join(output_dir, cfg.experiment_name + "_final.pt"))
     wandb.finish()
 
 
