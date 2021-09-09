@@ -1,0 +1,4 @@
+- token=3da03a9495362156a49127ed3a38f1a64eefda7e08800b5b
+- dataset_id=60fb047e640f1400273bf4e9
+- input_dir=./animals/
+- trainer.max_epochs=0

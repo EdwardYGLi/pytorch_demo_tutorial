@@ -1,2 +1,2 @@
 output_dir: "./outputs/${project_name}"
-dataset_dir: "./dataset/animals/"
+dataset_dir: "grid:animals:1"

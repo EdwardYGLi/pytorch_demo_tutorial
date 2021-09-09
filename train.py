@@ -6,7 +6,7 @@ import os
 import hydra
 import numpy as np
 import torch
-import wandb
+# import wandb
 from hydra.utils import get_original_cwd
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
@@ -122,7 +122,7 @@ def main(cfg):
 
     # init experiment in wandb
     os.makedirs(os.path.join(project_out_dir, "wandb"), exist_ok=True)
-    init_wandb(cfg, project_out_dir)
+    # init_wandb(cfg, project_out_dir)
 
     # reproducibility
     seed_random(cfg.seed)
@@ -148,7 +148,7 @@ def main(cfg):
     validation_loader = DataLoader(dataset.validation_data, cfg.batch_size, shuffle=False)
 
     # weight and biases can watch the model and track gradients (twice every epoch).
-    wandb.watch(model, log="all", log_freq=len(train_loader)//2)
+    # wandb.watch(model, log="all", log_freq=len(train_loader)//2)
 
     visualize_batches = []
     val_iter = iter(validation_loader)
