@@ -11,7 +11,7 @@ hydra:
 project_name: "conv_auto_encoder"
 experiment_name: '${now:%Y-%m-%d_%H-%M-%S}_${dataset.name}_${optimizer.name}'
 loss_fn: 'perceptual'
-epochs : 30
+epochs : 10
 save_interval: 5
 vis_batches: 2
 batch_size: 8

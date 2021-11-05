@@ -273,7 +273,7 @@ def main(cfg):
     validation_loader = DataLoader(dataset.validation_data, cfg.batch_size, shuffle=False)
 
     # weight and biases can watch the model and track gradients (twice every epoch).
-    wandb.watch(model, log="all", log_freq=len(train_loader))
+    wandb.watch(model, log_freq=100)
 
     visualize_batches = []
     val_iter = iter(validation_loader)
