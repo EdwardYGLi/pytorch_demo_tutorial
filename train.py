@@ -148,17 +148,12 @@ def run_epoch(model, data_loader, loss_fns, val_criteria=None, optimizer=None, d
     loss_dict["total"] = 0
 
     num_batches = len(data_loader)
-    log_gradients_freq = 100
+    log_gradients_freq = 50
 
     for batch_idx, batch in enumerate(data_loader):
         batch = batch.to(_device)
 
         if optimizer:
-            if (batch_idx % log_gradients_freq) == 0:
-                for name, parameter in model.named_parameters():
-                    if parameter.requires_grad:
-                        wandb.run.history.torch.log_tensor_stats(parameter.grad.data, "gradients/" + name)
-
             optimizer.zero_grad()
 
         output, latents = model(batch)
@@ -183,6 +178,12 @@ def run_epoch(model, data_loader, loss_fns, val_criteria=None, optimizer=None, d
             if debug:
                 print("dl/dw (loop):{}".format(model.decoder[6].weight.grad.mean()))
             optimizer.step()
+            # log gradients
+            if (batch_idx % log_gradients_freq) == 0:
+                for name, parameter in model.named_parameters():
+                    if parameter.requires_grad:
+                        wandb.run.history.torch.log_tensor_stats(parameter.grad.data, "gradients/" + name)
+                print("logged gradients")
 
     # divide loss by number of batches for per batch loss as losses are batch
     # mean errors
