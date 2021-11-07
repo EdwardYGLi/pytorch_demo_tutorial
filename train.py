@@ -97,22 +97,22 @@ def gen_validation_samples(model, vis_batches, tboard, epoch):
     vis_layers = ["encoder.0"]
 
     # hook our pre hook to model
-    activations, handles = activation_hook(model, vis_layers)
-    plot_act = False
+    # activations, handles = activation_hook(model, vis_layers)
+    # plot_act = False
     for batch_idx, vis_batch in enumerate(vis_batches):
         b, c, h, w = vis_batch.shape
         vis_batch = vis_batch.to(_device)
         outputs, _ = model(vis_batch)
 
-        if not plot_act:
-            for vis_layer in vis_layers:
-                # for now just visualize first level activations for the first image in first batch
-                curr_act = activations[vis_layer][0]
-                c, h, w = curr_act.shape
-                for k in range(c):
-                    act = curr_act[k:k + 1]  # slicing keep dim
-                    tboard.add_image("img_0_{}_act_{}".format(vis_layer,k), img_tensor=act, global_step=epoch)
-            plot_act = True
+        # if not plot_act:
+        #     for vis_layer in vis_layers:
+        #         # for now just visualize first level activations for the first image in first batch
+        #         curr_act = activations[vis_layer][0]
+        #         c, h, w = curr_act.shape
+        #         for k in range(c):
+        #             act = curr_act[k:k + 1]  # slicing keep dim
+        #             tboard.add_image("img_0_{}_act_{}".format(vis_layer,k), img_tensor=act, global_step=epoch)
+        #     plot_act = True
 
         for i in range(b):
             ind = batch_idx * b + i
@@ -121,9 +121,9 @@ def gen_validation_samples(model, vis_batches, tboard, epoch):
             out_img = np.concatenate([orig, img], axis=1)
             tboard.add_image("recon_{}".format(ind), img_tensor=out_img, global_step=epoch)
 
-    # unhooking will free some memory here.
-    for vis_layer in vis_layers:
-        handles[vis_layer].remove()
+    # # unhooking will free some memory here.
+    # for vis_layer in vis_layers:
+    #     handles[vis_layer].remove()
 
 
 def run_epoch(model, data_loader, loss_fns, val_criteria=None, optimizer=None, debug=False):
@@ -148,11 +148,17 @@ def run_epoch(model, data_loader, loss_fns, val_criteria=None, optimizer=None, d
     loss_dict["total"] = 0
 
     num_batches = len(data_loader)
+    log_gradients_freq = 100
 
-    for batch in data_loader:
+    for batch_idx, batch in enumerate(data_loader):
         batch = batch.to(_device)
 
         if optimizer:
+            if (batch_idx % log_gradients_freq) == 0:
+                for name, parameter in model.named_parameters():
+                    if parameter.requires_grad:
+                        wandb.run.history.torch.log_tensor_stats(parameter.grad.data, "gradients/" + name)
+
             optimizer.zero_grad()
 
         output, latents = model(batch)
@@ -273,7 +279,7 @@ def main(cfg):
     validation_loader = DataLoader(dataset.validation_data, cfg.batch_size, shuffle=False)
 
     # weight and biases can watch the model and track gradients (twice every epoch).
-    wandb.watch(model, log_freq=100)
+    wandb.watch(model, log_freq=50)
 
     visualize_batches = []
     val_iter = iter(validation_loader)
@@ -316,17 +322,17 @@ def main(cfg):
         model.train()
 
         # quick demo of backward hooks in network.
-        if cfg.debug:
-            handles = grad_hook(model, ["decoder.6"])
+        # if cfg.debug:
+        #     handles = grad_hook(model, ["decoder.6"])
 
         # run an training epoch
         epoch_train_loss = run_epoch(model=model, data_loader=train_loader, loss_fns=loss_fns, optimizer=optimizer,
                                      debug=cfg.debug)
 
-        # clear handles
-        if cfg.debug:
-            for key, handle in handles.items():
-                handle.remove()
+        # # clear handles
+        # if cfg.debug:
+        #     for key, handle in handles.items():
+        #         handle.remove()
         # log losses to tensorboard on epoch basis, can also log every few steps within the train function.
         for key, value in epoch_train_loss.items():
             print("train " + key, value)
