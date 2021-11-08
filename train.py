@@ -13,6 +13,7 @@ from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
+
 from datasets.dataset import DogsDataset
 from models.net import ConvolutionalAutoEncoder
 from perceptual_loss import perceptual_loss
@@ -182,6 +183,7 @@ def run_epoch(model, data_loader, loss_fns, val_criteria=None, optimizer=None, d
             if (batch_idx % log_gradients_freq) == 0:
                 for name, parameter in model.named_parameters():
                     if parameter.requires_grad:
+                        print(torch.count_nonzero(parameter.grad.data))
                         wandb.run.history.torch.log_tensor_stats(parameter.grad.data, "gradients/" + name)
                 print("logged gradients")
 
