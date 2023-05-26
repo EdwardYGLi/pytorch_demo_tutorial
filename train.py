@@ -364,7 +364,7 @@ def main(cfg):
 
 
     torch.save(model.state_dict(), os.path.join(output_dir, cfg.experiment_name + "_final.pt"))
-    artifact.add_file(os.path.join(output_dir, cfg.experiment_name + "_final.pt")
+    artifact.add_file(os.path.join(output_dir, cfg.experiment_name + "_final.pt"))
     run.log_artifact(artifact)
     wandb.finish()
 
