@@ -14,7 +14,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 
-from datasets.dataset import DogsDataset
+from datasets.dataset import AnimalsDataset
 from models.net import ConvolutionalAutoEncoder
 from perceptual_loss import perceptual_loss
 from utils import init_wandb, seed_random, ssim, psnr
@@ -120,6 +120,7 @@ def gen_validation_samples(model, vis_batches, epoch, tboard = None):
             img = outputs[i].cpu().numpy()[::-1, :, :]
             orig = vis_batch[i].cpu().numpy()[::-1, :, :]
             out_img = np.concatenate([orig, img], axis=1)
+            out_img = np.transpose(out_img,(1,2,0))
             wandb.log({f"val_images/recon_{ind}": wandb.Image(out_img)}, step=epoch)
             # tboard.add_image("recon_{}".format(ind), img_tensor=out_img, global_step=epoch)
 
@@ -181,12 +182,12 @@ def run_epoch(model, data_loader, loss_fns, val_criteria=None, optimizer=None, d
                 print("dl/dw (loop):{}".format(model.decoder[6].weight.grad.mean()))
             optimizer.step()
             # log gradients
-            if (batch_idx % log_gradients_freq) == 0:
-                for name, parameter in model.named_parameters():
-                    if parameter.requires_grad:
-                        print(torch.count_nonzero(parameter.grad.data))
-                        wandb.run.history.torch.log_tensor_stats(parameter.grad.data, "gradients/" + name)
-                print("logged gradients")
+            # if (batch_idx % log_gradients_freq) == 0:
+            #     for name, parameter in model.named_parameters():
+            #         if parameter.requires_grad:
+            #             print(torch.count_nonzero(parameter.grad.data))
+            #             wandb.run.history.torch.log_tensor_stats(parameter.grad.data, "gradients/" + name)
+            #     print("logged gradients")
 
     # divide loss by number of batches for per batch loss as losses are batch
     # mean errors
@@ -285,7 +286,7 @@ def main(cfg):
     # scheduler = get_scheduler(optimizer,cfg)
 
     # create dataset
-    dataset = DogsDataset(code_dir, cfg.dataset)
+    dataset = AnimalsDataset(code_dir, cfg.dataset)
 
     train_loader = DataLoader(dataset.training_data, cfg.batch_size, shuffle=True)
     validation_loader = DataLoader(dataset.validation_data, cfg.batch_size, shuffle=False)

@@ -10,7 +10,7 @@ from torch.utils.data.dataset import Dataset
 from torchvision import transforms
 
 
-class _DogsDatasetInternal(Dataset):
+class _AnimalsDatasetInternal(Dataset):
     def __init__(self, path, pattern, trans=None):
         self.files = glob.glob(os.path.join(path, pattern))
         self.len = len(self.files)
@@ -31,7 +31,7 @@ class _DogsDatasetInternal(Dataset):
         return img
 
 
-class DogsDataset:
+class AnimalsDataset:
     def __init__(self, code_dir, cfg):
         # do some augmentations
         train_transforms = transforms.Compose([
@@ -51,5 +51,5 @@ class DogsDataset:
 
         train_path = os.path.join(code_dir, cfg.dataset_path, "train")
         val_path = os.path.join(code_dir, cfg.dataset_path, "val")
-        self.training_data = _DogsDatasetInternal(train_path, cfg.file_pattern, trans=train_transforms)
-        self.validation_data = _DogsDatasetInternal(val_path, cfg.file_pattern, trans=validation_transforms)
+        self.training_data = _AnimalsDatasetInternal(train_path, cfg.file_pattern, trans=train_transforms)
+        self.validation_data = _AnimalsDatasetInternal(val_path, cfg.file_pattern, trans=validation_transforms)
