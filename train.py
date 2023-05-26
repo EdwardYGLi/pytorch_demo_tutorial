@@ -245,7 +245,7 @@ def main(cfg):
 
     # init experiment in wandb
     os.makedirs(os.path.join(project_out_dir, "wandb"), exist_ok=True)
-    init_wandb(cfg, project_out_dir)
+    run = init_wandb(cfg, project_out_dir)
 
     artifact = wandb.Artifact("model_weights", type="ckpt")
     # reproducibility
@@ -319,7 +319,7 @@ def main(cfg):
 
         if epoch_val_loss["total"] < curr_best:
             torch.save(model.state_dict(), os.path.join(output_dir, cfg.experiment_name + "_best.pt"))
-            artifact.add_file(os.path.join(output_dir, cfg.experiment_name + "_best.pt"))
+            # artifact.add_file(os.path.join(output_dir, cfg.experiment_name + "_best.pt"))
 
         val_loss_dict = {}
         # log losses to tensorboard
