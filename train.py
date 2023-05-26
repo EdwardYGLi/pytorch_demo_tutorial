@@ -10,7 +10,7 @@ import torch.nn as nn
 import wandb
 from hydra.utils import get_original_cwd
 from torch.utils.data import DataLoader
-from torch.utils.tensorboard import SummaryWriter
+# from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
 
@@ -85,7 +85,7 @@ def grad_hook(model, layers):
     return handles
 
 
-def gen_validation_samples(model, vis_batches, tboard, epoch):
+def gen_validation_samples(model, vis_batches, epoch, tboard = None):
     """
     Generate some validation plots to help us visualize our training
     @param model: model
@@ -120,7 +120,8 @@ def gen_validation_samples(model, vis_batches, tboard, epoch):
             img = outputs[i].cpu().numpy()[::-1, :, :]
             orig = vis_batch[i].cpu().numpy()[::-1, :, :]
             out_img = np.concatenate([orig, img], axis=1)
-            tboard.add_image("recon_{}".format(ind), img_tensor=out_img, global_step=epoch)
+            wandb.log({f"val_images/recon_{ind}": wandb.Image(out_img)}, step=epoch)
+            # tboard.add_image("recon_{}".format(ind), img_tensor=out_img, global_step=epoch)
 
     # # unhooking will free some memory here.
     # for vis_layer in vis_layers:
@@ -257,6 +258,14 @@ def main(cfg):
     # create model
     model = ConvolutionalAutoEncoder()
     model = model.to(_device)
+    
+    trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+    print(model)
+    print(f"trainable params: {trainable_params}")
+    print("initialized model")
+    wandb.run.summary["trainable_params"] = trainable_params
+    
 
     # load pretrained checkpoint to resume training.
     if cfg.pretrained != "":
@@ -266,7 +275,7 @@ def main(cfg):
         model.load_state_dict(state_dict)
 
     # create a tensorboard writer that writes to our directory
-    tboard_writer = SummaryWriter(output_dir)
+    # tboard_writer = SummaryWriter(output_dir)
 
     # get optimizer
     optimizer = get_optimizer(model, cfg)
@@ -306,7 +315,7 @@ def main(cfg):
         # do validation first
         model.eval()
         # loss some validation samples first
-        gen_validation_samples(model, visualize_batches, tboard_writer, epoch)
+        gen_validation_samples(model, visualize_batches, epoch)
 
         # run an validation epoch
         epoch_val_loss = run_epoch(model=model, data_loader=validation_loader, loss_fns=loss_fns,
@@ -315,10 +324,15 @@ def main(cfg):
         if epoch_val_loss["total"] < curr_best:
             torch.save(model.state_dict(), os.path.join(output_dir, cfg.experiment_name + "_best.pt"))
 
+        val_loss_dict = {}
         # log losses to tensorboard
         for key, value in epoch_val_loss.items():
             print("val " + key, value)
-            tboard_writer.add_scalar("val_" + key, value, epoch)
+            # tboard_writer.add_scalar("val_" + key, value, epoch)
+            val_loss_dict["val/" + key] = value 
+        
+        wandb.log(val_loss_dict, step =epoch)
+
 
         # resume autograd
         torch.set_grad_enabled(True)
@@ -337,14 +351,20 @@ def main(cfg):
         #     for key, handle in handles.items():
         #         handle.remove()
         # log losses to tensorboard on epoch basis, can also log every few steps within the train function.
+        train_loss_dict = {}
         for key, value in epoch_train_loss.items():
             print("train " + key, value)
-            tboard_writer.add_scalar("train_" + key, value, epoch)
+            # tboard_writer.add_scalar("train_" + key, value, epoch)
+            train_loss_dict["train/" + key] = value 
+            
+        wandb.log(train_loss_dict, step =epoch)
 
         # step your scheduler
         if scheduler:
             scheduler.step()
-            tboard_writer.add_scalar("learning_rate", scheduler.get_lr()[0], epoch)
+            # tboard_writer.add_scalar("learning_rate", scheduler.get_lr()[0], epoch)
+            wandb.log({"learning_rate": scheduler.get_lr()[0]}, step =epoch)
+
 
     torch.save(model.state_dict(), os.path.join(output_dir, cfg.experiment_name + "_final.pt"))
     wandb.finish()
